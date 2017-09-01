@@ -19,10 +19,7 @@ public class ComparatorDemo {
 
 		// Printing unsorted list
 		System.out.println("\nPrinting unsorted list...");
-		for (Customer emp : customerList) {
-			System.out.println(emp.toString());
-			;
-		}
+		ComparatorDemo.printList(customerList);
 
 		/*
 		 * The below commented line will not work as it requires Customer class to
@@ -46,9 +43,7 @@ public class ComparatorDemo {
 		});
 
 		System.out.println("\nPrinting sorted list, age wise...");
-		for (Customer emp : customerList) {
-			System.out.println(emp.toString());
-		}
+		ComparatorDemo.printList(customerList);
 
 		/*
 		 * The below code is to compare and sort on the basis of Customer name
@@ -62,13 +57,40 @@ public class ComparatorDemo {
 		});
 
 		System.out.println("\nPrinting sorted list, Name wise ...");
+		ComparatorDemo.printList(customerList);
+
+		/*
+		 * Compare and sort before Java 8 lambda expression
+		 */
+		customerList.sort(new Comparator<Customer>() {
+
+			@Override
+			public int compare(Customer o1, Customer o2) {
+				return o1.getAge() - o2.getAge();
+			}
+
+		});
+
+		/*
+		 * Compare and sort using lambda expression
+		 */
+		customerList.sort((Customer o1, Customer o2) -> o1.getAge() - o2.getAge());
+
+		/*
+		 * Compare and sort using lambda expression,further simplified form of code
+		 */
+		customerList.sort((o1, o2) -> o1.getAge() - o2.getAge());
+
+		System.out.println("\nPrinting sorted list using Lambda, Age wise ...");
+		ComparatorDemo.printList(customerList);
+	}
+
+	static void printList(List<Customer> customerList) {
 		for (Customer emp : customerList) {
 			System.out.println(emp.toString());
 		}
-
 	}
 }
-
 
 /*
  * A simple POJO class for Customer having name and age properties
