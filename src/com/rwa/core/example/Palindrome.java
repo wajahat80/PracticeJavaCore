@@ -12,21 +12,20 @@ public class Palindrome {
 	}
 
 	/*
-	 * Logic # 1: check each character from start by end
-	 * This function will take String argument and print whether it is a Palindrome
-	 * or not
+	 * Logic # 1: check each character from start by end This function will take
+	 * String argument and print whether it is a Palindrome or not
 	 */
 	static boolean checkPalindrome(String inp) {
 		boolean outcome = false;
 
 		if (inp != null && inp.length() > 0) {
 			char[] inpArr = inp.toCharArray();
-			
-			for(int i=0; i<inpArr.length/2 ; i++) {
-				System.out.println(">"+inpArr[i]+" <"+inpArr[inpArr.length-(i+1)]);
-				if(inpArr[i]!=inpArr[inpArr.length-(i+1)])
+
+			for (int i = 0; i < inpArr.length / 2; i++) {
+				System.out.println(">" + inpArr[i] + " <" + inpArr[inpArr.length - (i + 1)]);
+				if (inpArr[i] != inpArr[inpArr.length - (i + 1)])
 					return false;
-					
+
 			}
 			return true;
 		} else {
@@ -34,24 +33,23 @@ public class Palindrome {
 		}
 		return outcome;
 	}
-	
-	
+
 	/*
-	 * Logic # 2: Reverse the String and compare to check if they are equal
-	 * This function will take String argument and print whether it is a Palindrome
-	 * or not
+	 * Logic # 2: Reverse the String and compare to check if they are equal This
+	 * function will take String argument and print whether it is a Palindrome or
+	 * not
 	 */
 	static boolean checkPalindrome2(String inp) {
 		boolean outcome = false;
-		
+
 		String reverse = "";
-		
-		for(int i=inp.length()-1; i>=0 ; i--)
+
+		for (int i = inp.length() - 1; i >= 0; i--)
 			reverse += inp.charAt(i);
-		
-		if(inp.equals(reverse))
+
+		if (inp.equals(reverse))
 			return true;
-		
+
 		return outcome;
 	}
 }
