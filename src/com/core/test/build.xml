@@ -1,0 +1,419 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<project name="VU360-LMS" default="compile" basedir=".">
+    <description>
+        VU360-LMS ant build script.
+    </description>
+	<property environment="env"/>
+	<property environment="app-server" value="C:/apache-tomcat-7.0.42/" />
+	<property name="deploy.path" value="C:/apache-tomcat-7.0.42/webapps"/>
+    <property name="java-src" value="src/java"/>
+
+    <property name="build-number-file" value="src/config/build.number"/>
+    <property name="build-version-file" value="src/config/version.properties"/>
+    <property name="java-classes" value="dist/classes"/>
+    <property name="lib" value="src/lib"/>
+    <property name="velocity" value="src/vm"/>
+    <property name="config" value="src/config"/>
+    <property name="static" value="src/static"/>
+    <property name="xsd" value="src/xsd"/>
+    <property name="test-src" value="src/test"/>
+    <property name="test-reports" value="test-reports"/>
+    <property name="dev-int-host-userid" value="${username}"/>
+    <property name="dev-int-host-passwd" value="${password}!"/>
+    <property name="dev-int-host" value="${server}"/>
+    <property name="dev-int-host-dir" value="${distination}"/>
+
+	<property name="velocity-direct" value="src/vm"/>
+	<property name="src-javascript" value="src/static/javascript"/>
+	<property name="src-brand" value="src/static/brands/default"/>
+    <property name="dist" value="dist"/>
+    <property name="dist-web" value="/lms"/>
+    <property name="dist-WEB-INF" value="${dist-web}/WEB-INF"/>
+    <property name="dist-web-version" value="${dist-web}/version.html"/>
+    <property name="dist-classes" value="${dist-WEB-INF}/classes"/>
+	<property name="dist-classes-com" value="${dist-WEB-INF}/classes/com"/>
+    <property name="dist-lib" value="${dist-WEB-INF}/lib"/>
+    <property name="dist-velocity" value="${dist-WEB-INF}/classes/vm"/>
+	<property name="dist-javascript" value="${dist-web}/javascript"/>
+	<property name="dist-brand" value="${dist-web}/brands/default"/>
+    <property name="dist-war" value="/war"/>
+    <property name="dist-war-file" value="${dist-war}/vu360-lms.war"/>
+    <property name="dist-xsd" value="${dist-WEB-INF}/xsd"/>
+    <property name="quality-metric-out-dir" value="reports"/>
+    <tstamp>
+        <format property="now" pattern="yyyy-MM-dd_HH-mm-ss"/>
+    </tstamp>
+    <condition property="timestamp" value="${BUILD_ID}" else="${now}">
+        <isset property="BUILD_ID"/>
+    </condition>
+
+    <path id="class.path">
+        <fileset dir="src/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="cobertura.classpath">
+        <fileset dir="${cobertura.home}">
+            <include name="cobertura.jar"/>
+            <include name="lib/**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="version-build" description="generate the version for the build">
+        <buildnumber file="${build-number-file}"/>
+        <loadproperties srcFile="${build-version-file}"/>
+        <tstamp>
+            <format property="build.time" pattern="MM-dd-yyyy hh:mm aa"/>
+        </tstamp>
+		<echo message="@majorVersion}.${minorVersion}.${maintenanceVersion}.${build.number}" />
+        <replace file="${dist}/${timestamp}/${dist-web-version}" token="@majorVersion@" value="${majorVersion}"/>
+        <replace file="${dist}/${timestamp}/${dist-web-version}" token="@minorVersion@" value="${minorVersion}"/>
+        <replace file="${dist}/${timestamp}/${dist-web-version}" token="@maintenanceVersion@"
+                 value="${maintenanceVersion}"/>
+        <replace file="${dist}/${timestamp}/${dist-web-version}" token="@buildNumber@" value="${build.number}"/>
+        <replace file="${dist}/${timestamp}/${dist-web-version}" token="@date@" value="${build.time}"/>
+    </target>
+
+    <target name="init">
+        <mkdir dir="${dist}/${timestamp}/${dist-web}"/>
+        <mkdir dir="${dist}/${timestamp}/${dist-classes}"/>
+        <mkdir dir="${dist}/${timestamp}/${dist-lib}"/>
+        <mkdir dir="${dist}/${timestamp}/${dist-WEB-INF}"/>
+        <mkdir dir="${dist}/${timestamp}/${dist-war}"/>
+    </target>
+
+    <target name="quality-metric-init">
+    	<mkdir dir="${quality-metric-out-dir}"/>
+    </target>
+
+    <target name="copy-static-files">
+        <copy todir="${dist}/${timestamp}/${dist-web}">
+            <fileset dir="${static}">
+                <exclude name="**/brands/**" unless="dev.build"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-xsd-files">
+        <copy todir="${dist}/${timestamp}/${dist-xsd}">
+            <fileset dir="${xsd}"/>
+        </copy>
+    </target>
+
+    <target name="copy-velocity-files">
+        <copy todir="${dist}/${timestamp}/${dist-velocity}">
+            <fileset dir="${velocity}"/>
+        </copy>
+    </target>
+
+    <target name="copy-lib-files">
+        <copy todir="${dist}/${timestamp}/${dist-lib}">
+            <fileset dir="${lib}">
+                <exclude name="servlet.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-xml-files">
+        <copy file="${config}/toplink-mappings.xml" tofile="${dist}/${timestamp}/${dist-classes}/toplink-mappings.xml"/>
+        <copy todir="${dist}/${timestamp}/${dist-WEB-INF}">
+            <fileset dir="${config}">
+                <include name="*.xml"/>
+                <exclude name="**/toplink-*.xml/**"/>
+                <exclude name="**/*-test.xml/**"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-prop-files">
+        <copy todir="${dist}/${timestamp}/${dist-classes}">
+            <fileset dir="${config}">
+                <include name="*.properties"/>
+                <exclude name="version.properties"/>
+            </fileset>
+            <fileset dir="${config}/dev">
+                <include name="*.properties" if="dev.build"/>
+            	<include name="*jdbcperflogger.xml" if="dev.build"/>
+            	<include name="*log4j.xml" if="dev.build"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-files" description="copy necessary build files">
+        <antcall target="copy-lib-files"/>
+        <antcall target="copy-xml-files"/>
+        <antcall target="copy-velocity-files"/>
+        <antcall target="copy-static-files"/>
+        <antcall target="copy-xsd-files"/>
+        <antcall target="copy-prop-files"/>
+    </target>
+
+    <target name="dev-compile" depends="init" description="compile the source with debug information">
+        <copy file="${config}/toplink-sessions.xml" tofile="${dist}/${timestamp}/${dist-classes}/toplink-sessions.xml"/>
+        <copy file="${config}/applicationContext-test.xml"
+              tofile="${dist}/${timestamp}/${dist-WEB-INF}/applicationContext-test.xml"/>
+        <javac srcdir="${java-src}" destdir="${dist}/${timestamp}/${dist-classes}" debug="on" debuglevel="lines,vars,source"
+               fork="yes">
+            <exclude name="**/*Test.java"/>
+            <classpath refid="class.path"/>
+        </javac>
+        <property name="dev.build" value="true"/>
+    </target>
+
+    <target name="compile" depends="init" description="compile the source">
+        <javac srcdir="${java-src}" destdir="${dist}/${timestamp}/${dist-classes}"  debuglevel="lines,vars,source" fork="yes">
+            <exclude name="**/*Test.java"/>
+            <classpath refid="class.path"/>
+        </javac>
+    </target>
+
+    <target name="package" description="final step in packaging LMS build">
+        <antcall target="version-build"/>
+        <antcall target="package-war"/>
+        <antcall target="brands"/>
+    </target>
+
+    <target name="dev-update-properties" description="update dev vu360-lms.properties" if="localhost.properties">
+        <replace file="${deploy.path}/${dist-classes}/vu360-lms.properties" propertyfile="${localhost.properties}">
+            <replacefilter token="${AppServer}" value="${AppServer}"/>
+            <replacefilter token="10.0.100.190" property="localhost.ip"/>
+            <replacefilter token="d:/reports" property="localhost.reports.dir"/>
+            <replacefilter token="d:/documents" property="localhost.documents.dir"/>
+        </replace>
+    </target>
+
+    <target name="dev-int" description="generate the distribution for dev integration environment">
+        <antcall target="buildlmsapp"/>
+        <antcall target="scp"/>
+    </target>
+
+    <target name="dev" depends="dev-compile, copy-files" description="generate the dev distribution"/>
+	
+	<target name="dev-deploy-classes" depends="dev-compile">	        
+	        <copy todir="${deploy.path}/${dist-web}" includeemptydirs="no">
+	            <fileset dir="${dist}/${timestamp}/${dist-web}"/>
+	        </copy>
+	    	<!-- Start: Copy com folder to server for debugging ease-->
+	    	<delete dir="${deploy.path}/${dist-classes-com}"/>
+	    	<delete dir="${dist}/${timestamp}"/>
+	    	<mkdir dir="${deploy.path}/${dist-classes-com}"/>
+	    	<copy todir="${deploy.path}/${dist-classes-com}" includeemptydirs="no">
+	    	<fileset dir="${dist}/classes/com"/>
+	    	</copy>
+	    	<!-- End: Copy com folder to server for debugging ease-->
+	        <antcall target="dev-update-properties"/>
+	    </target>
+	
+    <target name="dev-deploy" depends="dev">
+        <delete dir="${deploy.path}/${dist-web}"/>
+        <mkdir dir="${deploy.path}/${dist-web}"/>
+        <copy todir="${deploy.path}/${dist-web}" includeemptydirs="no">
+            <fileset dir="${dist}/${timestamp}/${dist-web}"/>
+        </copy>
+    	<!-- Start: Copy com folder to server for debugging ease-->
+    	<delete dir="${deploy.path}/${dist-classes-com}"/>
+    	<delete dir="${dist}/${timestamp}"/>
+    	<mkdir dir="${deploy.path}/${dist-classes-com}"/>
+    	<copy todir="${deploy.path}/${dist-classes-com}" includeemptydirs="no">
+    	<fileset dir="${dist}/classes/com"/>
+    	</copy>
+    	<!-- End: Copy com folder to server for debugging ease-->
+        <antcall target="dev-update-properties"/>
+    </target>
+	 <target name="copy-ui">
+	   	<copy todir="${deploy.path}/${dist-velocity}" includeemptydirs="no">
+	  	   <fileset dir="${velocity-direct}"/>
+	   	</copy>
+	 	<copy todir="${deploy.path}/${dist-javascript}" includeemptydirs="no">
+	 		  	   <fileset dir="${src-javascript}"/>
+	 	</copy>
+	 	<copy todir="${deploy.path}/${dist-brand}" includeemptydirs="no">
+	 		 		  	   <fileset dir="${src-brand}"/>
+	 		 	</copy>
+	  </target>
+
+    <target name="dev-quick-deploy" depends="dev-compile">
+        <copy todir="${deploy.path}/${dist-classes}" includeemptydirs="no">
+            <fileset dir="${dist}/${timestamp}/${dist-classes}"/>
+        </copy>
+    </target>
+
+    <target name="buildlmsapp" depends="compile, copy-files">
+        <antcall target="package"/>
+    </target>
+
+    <target name="prod" description="generate the distribution for PROD">
+        <antcall target="buildlmsapp"/>
+    </target>
+
+    <target name="qa" description="generate the distribution for QA">
+        <antcall target="buildlmsapp"/>
+    </target>
+
+    <target name="uat" description="generate the distribution for UAT">
+        <antcall target="buildlmsapp"/>
+    </target>
+
+    <target name="demo" description="generate the distribution for demo">
+        <antcall target="buildlmsapp"/>
+    </target>
+
+    <path id="junit.class.path">
+		<fileset dir="src/lib" includes="*.jar"/>
+		<pathelement location="${dist}/${timestamp}/${dist-classes}"/>
+	</path>
+
+    <target name="compiletests" description="Compile test java files" unless="skiptest">
+        <mkdir dir="${dist}/${timestamp}/${test-reports}"/>
+        <javac srcdir="${test-src}" destdir="${dist}/${timestamp}/${dist-classes}" debug="true" deprecation="false" debuglevel="lines,vars,source"
+               optimize="false" failonerror="true" fork="yes" excludes="**/webservice/*Test.java, **/vcs/*Test.java">
+            <classpath refid="junit.class.path"/>
+        </javac>
+    </target>
+
+    <target name="runtests" depends="compiletests" description="Run tests" unless="skiptest">
+        <junit printsummary="on" fork="false" haltonfailure="false" failureproperty="tests.failed" showoutput="true">
+            <classpath>
+                <path refid="junit.class.path"/>
+                <pathelement path="${dist}/${timestamp}/${dist-WEB-INF}"/>
+            </classpath>
+            <formatter type="xml" usefile="true"/>
+            <batchtest todir="${dist}/${timestamp}/${test-reports}">
+                <fileset dir="${dist}/${timestamp}/${dist-classes}" includes="**/*OptimizedBatchImportLearnersServiceImplTest.*"/>
+            </batchtest>
+        </junit>
+        <fail if="tests.failed">
+            tests.failed=${tests.failed}
+
+            ***********************************************************
+            **** One or more tests failed! Check the output ... *******
+            ***********************************************************
+        </fail>
+    </target>
+
+    <target name="package-war">
+        <war destfile="${dist}/${timestamp}/${dist-war-file}" webxml="${dist}/${timestamp}/${dist-web}/WEB-INF/web.xml">
+            <fileset dir="${dist}/${timestamp}/${dist-web}/" excludes="WEB-INF"/>
+            <lib dir="${dist}/${timestamp}/${dist-web}/WEB-INF/lib">
+                <include name="**/*.jar"/>
+                <include name="**/*.zip"/>
+            </lib>
+        </war>
+    </target>
+
+    <target name="brands" description="Generate brands distribution containing brands files">
+        <mkdir dir="${dist}/${timestamp}"/>
+        <zip destfile="${dist}/${timestamp}/brands.zip" excludes="**/lms_create_brand_directory_structure.sh"  basedir="${static}/brands"/>
+    </target>
+
+    <target name="scp" description="SCP to a remote server">
+        <echo message="This can be a time consuming task so please be patient."/>
+        <scp file="${dist}/${timestamp}/${dist-war-file}"
+             todir="${dev-int-host-userid}:${dev-int-host-passwd}@${dev-int-host}:${dev-int-host-dir}"/>
+    </target>
+
+    <property name="instrumented.dir" value="${dist}/${timestamp}/instrumented-classes"/>
+    <property name="coveragereport.dir" value="${quality-metric-out-dir}/cobertura"/>
+
+    <target name="instrument" depends="dev-compile, copy-files, quality-metric-init">
+        <taskdef classpathref="cobertura.classpath" resource="tasks.properties"/>
+        <mkdir dir="${instrumented.dir}"/>
+        <delete file="${quality-metric-out-dir}/cobertura.ser"/>
+        <cobertura-instrument todir="${instrumented.dir}" datafile="${quality-metric-out-dir}/cobertura.ser">
+            <fileset dir="${dist}/${timestamp}/${dist-classes}">
+                <include name="**/*.class"/>
+                <exclude name="**/*Test.class"/>
+            </fileset>
+        </cobertura-instrument>
+    </target>
+
+    <target name="cobertura-test-coverage" depends="instrument, compiletests">
+        <junit printsummary="true" showoutput="true" fork="true" haltonerror="true">
+            <sysproperty key="net.sourceforge.cobertura.datafile" file="${quality-metric-out-dir}/cobertura.ser"/>
+            <classpath location="${instrumented.dir}"/>
+            <classpath>
+                <path refid="class.path"/>
+                <pathelement path="${dist}/${timestamp}/${dist-classes}"/>
+                <pathelement path="${dist}/${timestamp}/${dist-WEB-INF}"/>
+            </classpath>
+            <classpath refid="cobertura.classpath"/>
+            <batchtest todir="${dist}/${timestamp}/${dist-classes}/reports">
+                <fileset dir="${dist}/${timestamp}/${dist-classes}">
+                    <include name="**/*Test.*"/>
+                    <exclude name="**/vcs/*Test.class"/>
+                    <exclude name="**/webservice/*Test.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="cobertura-report" depends="cobertura-test-coverage">
+        <mkdir dir="${coveragereport.dir}"/>
+        <cobertura-report format="html"
+                          destdir="${coveragereport.dir}"
+                          srcdir="${java-src}"
+                          datafile="${quality-metric-out-dir}/cobertura.ser"/>
+    </target>
+
+	<target name="findbugs" depends="dev-compile">
+        <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask"/>
+		<findbugs home="${findbugs.home}" output="html" failOnError="true"
+			outputFile="${quality-metric-out-dir}/findbugs-report.html" jvmArgs="-Xms256m -Xmx512m" effort="max" reportLevel="medium">
+			<class location="${dist}/${timestamp}/${dist-classes}"/>
+			<sourcePath path="${java-src}"/>
+		</findbugs>
+	</target>
+
+	<target name="checkstyle" depends="quality-metric-init">
+        <taskdef resource="checkstyletask.properties" classpath="${checkstyle.home}/checkstyle-all-5.1.jar"/>
+		<checkstyle config="${checkstyle.home}/sun_checks.xml" failOnViolation="false">
+			<fileset dir="${java-src}" includes="**/*.java"/>
+			<formatter type="plain"/>
+			<formatter type="xml" tofile="${quality-metric-out-dir}/checkstyle-report.xml"/>
+		</checkstyle>
+		<xslt in="${quality-metric-out-dir}/checkstyle-report.xml" style="${checkstyle.home}/contrib/checkstyle-noframes-severity-sorted.xsl"
+              out="${quality-metric-out-dir}/checkstyle-report.html"/>
+	</target>
+
+      <target name="run-all-quality-metrics">
+            <antcall target="cobertura-report"/>
+            <antcall target="findbugs"/>
+            <antcall target="checkstyle"/>
+      </target>
+      
+      <!-- Start -->
+      <!-- Ant Command for make Single Jar -->
+      <target name="copy-mappingfile-for-Jar">
+            <copy file="${config}/toplink-sessions.xml" tofile="${dist}/${timestamp}/${dist-classes}/toplink-sessions.xml"/>
+            <copy file="src/java/com/softech/vu360/lms/autoAlertGenerator/applicationContext.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/applicationContext.xml"/>
+            <copy file="src/java/com/softech/vu360/lms/autoAlertGenerator/mail-config.properties" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/com/softech/vu360/lms/autoAlertGenerator/mail-config.properties"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/applicationContext-security.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/applicationContext-security.xml"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/spring-web-json-servlet.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/spring-web-json-servlet.xml"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/spring-ws-servlet.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/spring-ws-servlet.xml"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/views.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/views.xml"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/vu360-lms-servlet.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/vu360-lms-servlet.xml"/>
+            <copy file="${dist}/${timestamp}/lms/WEB-INF/ws-client.xml" tofile="${dist}/${timestamp}/lms/WEB-INF/classes/ws-client.xml"/>
+      </target>
+      
+      <target name="Alert-Scheduler" depends="compile, copy-files, copy-mappingfile-for-Jar" > 
+            <jar jarfile="${dist}/${timestamp}/war/AlertScheduler.jar" basedir="${dist}/${timestamp}/lms/WEB-INF/classes"/>
+             
+              <copy todir="${dist}/${timestamp}/war/lib">
+               <fileset dir="${dist}/${timestamp}/lms/WEB-INF/lib"/>
+             </copy>
+           
+              <!-- <war destfile="${dist}/${timestamp}/autoAlertGenerator.war" basedir="${dist}/${timestamp}/war" needxmlfile='false' /> -->
+             <zip destfile="${dist}/${timestamp}/AlertScheduler.zip">
+                     <fileset dir="${dist}/${timestamp}/war"/>
+             </zip>
+           
+       </target>
+      <!-- End -->
+
+	<target name="purge">
+		<echo message="purging ..."/>
+		<delete dir="${dist}/${timestamp}" failonerror="false"/>
+		<echo message="purged. done."/>
+	</target>
+</project>
