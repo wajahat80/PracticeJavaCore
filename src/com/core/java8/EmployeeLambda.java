@@ -1,4 +1,4 @@
-package com.rwa.core.example.java8;
+package com.core.java8;
 
 public class EmployeeLambda {
 

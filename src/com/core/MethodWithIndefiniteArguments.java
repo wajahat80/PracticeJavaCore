@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 /*
  * This program demonstrate how can be a method define with variable number of arguments

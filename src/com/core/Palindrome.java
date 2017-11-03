@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 /*
  * A string is a Palindrome if it remains unchanged when reversed, 
@@ -36,8 +36,8 @@ public class Palindrome {
 
 	/*
 	 * Logic # 2: Reverse the String and compare to check if they are equal This
-	 * function will take String argument and print whether it is a Palindrome or
-	 * not
+	 * function will take String argument and print whether it is a Palindrome
+	 * or not
 	 */
 	static boolean checkPalindrome2(String inp) {
 		boolean outcome = false;

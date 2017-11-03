@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

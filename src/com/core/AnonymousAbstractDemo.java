@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 /* 
  * an abstract class is one which implements functionality of an interface or abstract class, 
@@ -11,10 +11,10 @@ package com.rwa.core.example;
  * An anonymous class can access any variables visible to the block within which the anonymous class is declared, including local variables. 
  * An anonymous class can also access methods of the class that contains it.
 */
-public class AnonymousDemo {
+public class AnonymousAbstractDemo {
 
 	public static void main(String... strings) {
-		AnonymousDemo a = new AnonymousDemo();
+		AnonymousAbstractDemo a = new AnonymousAbstractDemo();
 		a.useIface();
 
 		int sum = a.useMyAbstractClass(5, 9);

@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 public class GenericWildCardDemo {
 

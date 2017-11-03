@@ -1,4 +1,4 @@
-package com.rwa.core.example;
+package com.core;
 
 import java.util.ArrayList;
 import java.util.List;

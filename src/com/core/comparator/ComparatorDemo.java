@@ -1,4 +1,4 @@
-package com.rwa.core.example.comparator;
+package com.core.comparator;
 
 import java.util.Arrays;
 import java.util.Collections;
